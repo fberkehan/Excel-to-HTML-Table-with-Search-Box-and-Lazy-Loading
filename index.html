@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel to HTML Table with Search Box and Lazy Loading</title>
+    <style>
+      /* Tablo stilini düzenle */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 100%;
+        white-space: nowrap;
+      }
+
+      table td,
+      table th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
+
+      table tr:nth-child(even) {
+        background-color: #dddddd;
+      }
+
+      /* Arama kutusu stilini düzenle */
+      .search-box {
+        position: sticky;
+        top: 0;
+        background-color: #ffffff;
+        padding: 8px;
+        z-index: 1;
+        display: none;
+      }
+
+      .search-box input[type="text"] {
+        width: 100%;
+        padding: 8px 16px;
+        margin: 8px 0;
+        box-sizing: border-box;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        
+      }
+
+      /* Yükleniyor animasyonu */
+      .loading {
+        text-align: center;
+        font-size: 24px;
+        color: #cccccc;
+        margin-top: 16px;
+      }
+      .progress {
+  height: 20px;
+  background-color: #f2f2f2;
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #007bff;
+  width: 0%;
+  transition: 2s;
+}
+    </style>
+        <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.8/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <div id="resimLogo" style="    display: flex;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    transition: 2s;
+    align-items: center;">
+
+<!--     <img style="margin:auto;width:300px;" src="#" alt="" srcset=""> -->
+      
+      <h2>DEVELOPED BY FUBER</h2>
+
+    </div>
+  <div class="progress" id="progress">
+  <div id="progress-barf" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+<p id="yukleniyoryazisi">Yükleniyor lütfen bekleyin...</p>
+
+    <div class="search-box" id="search-boxc">
+      <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Arama yap...">
+    </div>
+    <div id="myTable"></div>
+    <div class="loading" id="loading">Yükleniyor...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script>
+var durdurucu = 0;
+
+let start = 0;
+let pageSize = 50; // İlk yükleme için sayfa boyutu
+let loadMoreInterval = null; // Yükleme aralığı için zamanlayıcı değişkeni
+
+let loadedPercentage = 0; // Yüklenen veri yüzdesi
+
+const url = "EXCEL.XLSX";
+const oReq = new XMLHttpRequest();
+oReq.responseType = "arraybuffer";
+
+oReq.onload = function () {
+  const arraybuffer = oReq.response;
+
+  /* Excel dosyasını bir JSON nesnesine dönüştür */
+  const data = new Uint8Array(arraybuffer);
+  const workbook = XLSX.read(data, { type: "array" });
+  const sheet_name_list = workbook.SheetNames;
+  const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+
+  /* Tabloyu oluştur */
+  const table = document.createElement("table");
+
+  /* Başlık satırını oluştur */
+  const header = table.createTHead();
+  const headerRow = header.insertRow();
+  for (const property in xlData[0]) {
+    const cell = headerRow.insertCell();
+    cell.innerHTML = "<b>" + property + "</b>";
+  }
+
+  /* Tablo gövdesini oluştur */
+  const tbody = table.createTBody();
+  let i = start;
+  while (i < start + pageSize && i < xlData.length) {
+    const row = tbody.insertRow();
+    for (const property in xlData[i]) {
+      const cell = row.insertCell();
+      cell.innerHTML = xlData[i][property];
+    }
+    i++;
+  }
+
+  /* Tabloyu sayfaya ekle */
+  document.getElementById("myTable").appendChild(table);
+
+  /* Yükleniyor animasyonunu gizle */
+  document.getElementById("loading").style.display = "none";
+
+  /* Otomatik yükleme zamanlayıcısını başlat */
+  loadMoreInterval = setInterval(function () {
+    /* Yeni sayfa boyutunu hesapla ve güncelle */
+    pageSize += 500;
+    /* Yeni verileri yükle */
+    
+    let j = start;
+    while (j < start + 500 && j < xlData.length) {
+      const row = tbody.insertRow();
+      for (const property in xlData[j]) {
+        const cell = row.insertCell();
+        cell.innerHTML = xlData[j][property];
+      }
+      j++;
+    }
+    start += 500;
+
+ loadedPercentage = Math.min(100, Math.floor((start / xlData.length) * 100));
+    const progressBar = document.querySelector(".progress-bar");
+    progressBar.style.width = loadedPercentage + "%";
+    progressBar.setAttribute("aria-valuenow", loadedPercentage);
+
+    // Yüklenme tamamlandığında alert göster
+    if (start >= xlData.length) {
+      clearInterval(loadMoreInterval);
+      document.getElementById("search-boxc").style.display = "block";
+      document.getElementById("progress-barf").style.backgroundColor = "#dfde00";
+      document.getElementById("yukleniyoryazisi").innerHTML = "Tablo yüklendi aramayı kullanabilirsiniz!";
+      document.getElementById("resimLogo").style.marginTop  = "33px";
+      document.getElementById("resimLogo").style.marginBottom  = "33px";
+      
+      
+      
+    }
+
+  }, 3000);
+  
+};
+oReq.open("GET", url, true);
+oReq.send();
+
+/* Tabloda arama yap */
+function searchTable() {
+  const input = document.getElementById("searchInput");
+  const filter = input.value.toUpperCase();
+  const table = document.getElementsByTagName("table")[0];
+  const tr = table.getElementsByTagName("tr");
+
+  for (let i = 0; i < tr.length; i++) {
+    const td = tr[i].getElementsByTagName("td");
+    let found = false;
+    for (let j = 0; j < td.length; j++) {
+      const cell = td[j];
+      if (cell) {
+        const txtValue = cell.textContent || cell.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          found = true;
+        }
+      }
+    }
+    if (found) {
+      tr[i].style.display = "";
+    } else {
+      tr[i].style.display = "none";
+    }
+  }
+}
+
+
+
+/* Belirli aralıklarla verileri yükle */
+setInterval(loadMoreData, 5000);
+
+
+</script>
+</body>
+</html>
