@@ -23,3 +23,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 Acknowledgments
 This project was inspired by this tutorial on converting Excel data to an HTML table using jQuery.
 The lazy loading functionality was inspired by this tutorial on lazy loading images.
+![image](https://user-images.githubusercontent.com/83727951/220657578-949746c7-b914-4f8f-97a3-4d7146afe702.png)
+![image](https://user-images.githubusercontent.com/83727951/220657641-251ee77f-87eb-46e9-87a0-02b19176bb4d.png)
